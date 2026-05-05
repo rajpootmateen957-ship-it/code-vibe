@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #050505;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+#webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  outline: none;
+  z-index: -1;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  /* Let clicks pass through to canvas */
+}
+
+.section {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 10vw;
+}
+
+.hero {
+  text-align: center;
+  width: 100%;
+}
+
+.title {
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: -2px;
+  background: linear-gradient(90deg, #ffffff, #555555);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #888;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.story-block {
+  max-width: 400px;
+}
+
+.story-block h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  background: linear-gradient(45deg, #ff0055, #0055ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.story-block p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #aaa;
+  font-weight: 300;
+}
+
+.left {
+  justify-content: flex-start;
+}
+
+.right {
+  margin-left: auto;
+}
+
+.center {
+  margin: 0 auto;
+  text-align: center;
+}
