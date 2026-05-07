@@ -1,344 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code Vibe | Premium Digital Experience</title>
-  <meta name="description" content="Code Vibe — A premium digital experience crafted with cutting-edge 3D visuals and cinematic animations.">
-  <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Creative Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <!-- Three.js Canvas -->
-  <canvas id="webgl"></canvas>
 
-  <!-- Floating Glow Orbs (CSS decorative) -->
-  <div class="glow-orb orb-1"></div>
-  <div class="glow-orb orb-2"></div>
-  <div class="glow-orb orb-3"></div>
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-line"></div>
+      <div class="loader-count" id="loaderCount">00</div>
+      <div class="loader-label">INITIALIZING</div>
+    </div>
+  </div>
 
-  <!-- NAVBAR -->
-  <nav class="navbar" id="navbar">
-    <div class="nav-inner">
-      <a href="#home" class="logo">
-        <span class="logo-icon">◆</span>
-        <span class="logo-text">CODE VIBE</span>
-      </a>
-      <ul class="nav-links">
-        <li><a href="#home" class="nav-link active">Home</a></li>
-        <li><a href="#about" class="nav-link">About</a></li>
-        <li><a href="#services" class="nav-link">Services</a></li>
-        <li><a href="#contact" class="nav-link">Contact</a></li>
-      </ul>
-      <div class="nav-auth">
-        <a href="#auth" class="btn-sign-in">Sign In</a>
-        <a href="#auth" class="btn-get-started">Get Started</a>
-      </div>
-      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
+  <!-- CURSOR -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- PROGRESS -->
+  <div class="progress" id="progress"></div>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <div class="nav-logo">CV<span>.</span></div>
+    <div class="nav-links">
+      <span>Work</span>
+      <span>About</span>
+      <span>Contact</span>
+    </div>
+    <div class="nav-status">
+      <span class="status-dot"></span>Available
     </div>
   </nav>
 
-  <!-- MOBILE MENU -->
-  <div class="mobile-menu" id="mobileMenu">
-    <ul>
-      <li><a href="#home" class="mobile-link">Home</a></li>
-      <li><a href="#about" class="mobile-link">About</a></li>
-      <li><a href="#services" class="mobile-link">Services</a></li>
-      <li><a href="#contact" class="mobile-link">Contact</a></li>
-      <li><a href="#auth" class="mobile-link">Sign In</a></li>
-    </ul>
+  <!-- VIDEO BACKGROUND -->
+  <div class="video-bg-wrapper" id="videoBgWrapper">
+    <video
+      id="bgVideo"
+      class="video-bg"
+      muted
+      playsinline
+      preload="auto"
+    >
+      <source
+        src="https://www.shutterstock.com/shutterstock/videos/17476015/preview/stock-footage-electronic-hydrogen-lithium-ion-battery-echo-car-charging-car-battery-x-ray-image-eco-friendly.mp4"
+        type="video/mp4"
+      />
+    </video>
+    <div class="video-overlay"></div>
+    <div class="video-grain"></div>
   </div>
 
-  <!-- PAGE CONTENT -->
-  <div class="content">
+  <!-- THREE.JS CANVAS -->
+  <canvas id="webgl"></canvas>
 
-    <!-- ===== SECTION: HOME / HERO ===== -->
-    <section class="section section-home" id="home">
+  <!-- STORY -->
+  <div class="story">
+
+    <!-- HERO -->
+    <section class="chapter hero-chapter" id="ch0">
       <div class="hero-content">
-        <div class="hero-badge">✦ NEXT-GEN DIGITAL STUDIO</div>
-        <h1 class="hero-title">We Build<br><span class="gradient-text">Digital Futures</span></h1>
-        <p class="hero-description">Crafting immersive digital experiences through cutting-edge technology, bold design, and relentless innovation.</p>
-        <div class="hero-cta">
-          <a href="#about" class="btn-primary">Explore Our Work</a>
-          <a href="#contact" class="btn-outline">Get In Touch</a>
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span>CREATIVE PORTFOLIO — 2025</span>
         </div>
-        <div class="hero-stats">
-          <div class="stat">
-            <span class="stat-number" data-count="150">0</span><span class="stat-plus">+</span>
-            <span class="stat-label">Projects Delivered</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" data-count="98">0</span><span class="stat-plus">%</span>
-            <span class="stat-label">Client Satisfaction</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" data-count="12">0</span><span class="stat-plus">+</span>
-            <span class="stat-label">Years Experience</span>
-          </div>
+        <h1 class="hero-title">
+          <span class="hero-line" data-text="THE">THE</span>
+          <span class="hero-line accent" data-text="BLUEPRINT">BLUEPRINT</span>
+        </h1>
+        <p class="hero-sub">
+          Every masterpiece begins<br>as scattered pieces.
+        </p>
+        <div class="hero-scroll-hint">
+          <span>SCROLL TO EXPLORE</span>
+          <div class="scroll-line"></div>
         </div>
       </div>
-      <div class="scroll-indicator">
-        <div class="scroll-line"></div>
-        <span>Scroll to explore</span>
-      </div>
+      <div class="hero-index">001 / 005</div>
     </section>
 
-    <!-- ===== SECTION: ABOUT ===== -->
-    <section class="section section-about" id="about">
-      <div class="about-grid">
-        <div class="about-left">
-          <div class="section-label">ABOUT US</div>
-          <h2 class="section-heading">We don't just build websites.<br>We craft <span class="gradient-text">experiences</span>.</h2>
-          <p class="about-text">At Code Vibe, we merge artistry with engineering. Our team of designers, developers, and strategists work together to create digital products that captivate audiences and drive results.</p>
-          <p class="about-text">From immersive 3D web experiences to scalable enterprise platforms, we push the boundaries of what's possible on the web.</p>
-          <div class="about-features">
-            <div class="feature">
-              <div class="feature-icon">⚡</div>
-              <div>
-                <h4>Lightning Fast</h4>
-                <p>Optimized for peak performance across all devices.</p>
-              </div>
-            </div>
-            <div class="feature">
-              <div class="feature-icon">🎨</div>
-              <div>
-                <h4>Pixel Perfect</h4>
-                <p>Every detail meticulously crafted for visual excellence.</p>
-              </div>
-            </div>
-            <div class="feature">
-              <div class="feature-icon">🔒</div>
-              <div>
-                <h4>Secure & Scalable</h4>
-                <p>Built with enterprise-grade security and scalability.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="about-right">
-          <!-- 3D mesh will float here -->
+    <!-- CH 1 -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-content left-align">
+        <div class="ch-label">CHAPTER II — COMPONENTS</div>
+        <h2 class="ch-title">PRECISION<br><em>ENGINEERING</em></h2>
+        <p class="ch-text">
+          Cinematic motion meets precision engineering. Every pixel is intentional, every interaction deliberate.
+        </p>
+        <div class="stat-row">
+          <div class="stat"><span>04+</span><small>Years</small></div>
+          <div class="stat"><span>60+</span><small>Projects</small></div>
+          <div class="stat"><span>∞</span><small>Vision</small></div>
         </div>
       </div>
+      <div class="chapter-index">002 / 005</div>
     </section>
 
-    <!-- ===== SECTION: SERVICES ===== -->
-    <section class="section section-services" id="services">
-      <div class="services-content">
-        <div class="section-label">WHAT WE DO</div>
-        <h2 class="section-heading">Our <span class="gradient-text">Services</span></h2>
-        <div class="services-grid">
-          <div class="service-card">
-            <div class="service-number">01</div>
-            <h3>Web Development</h3>
-            <p>Custom web applications built with modern frameworks, delivering blazing performance and beautiful interfaces.</p>
-            <div class="service-tags">
-              <span>React</span><span>Next.js</span><span>Node.js</span>
-            </div>
-          </div>
-          <div class="service-card">
-            <div class="service-number">02</div>
-            <h3>3D & WebGL</h3>
-            <p>Immersive three-dimensional experiences and interactive visualizations that push the boundaries of the browser.</p>
-            <div class="service-tags">
-              <span>Three.js</span><span>WebGL</span><span>GSAP</span>
-            </div>
-          </div>
-          <div class="service-card">
-            <div class="service-number">03</div>
-            <h3>UI/UX Design</h3>
-            <p>Human-centered design that balances aesthetics with usability, creating products people love to use.</p>
-            <div class="service-tags">
-              <span>Figma</span><span>Prototyping</span><span>Design Systems</span>
-            </div>
-          </div>
-          <div class="service-card">
-            <div class="service-number">04</div>
-            <h3>Brand Identity</h3>
-            <p>Strategic brand development that establishes a powerful, memorable presence in the digital landscape.</p>
-            <div class="service-tags">
-              <span>Logo</span><span>Typography</span><span>Guidelines</span>
-            </div>
-          </div>
+    <!-- CH 2 -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-content right-align">
+        <div class="ch-label">CHAPTER III — STRUCTURE</div>
+        <h2 class="ch-title">BUILT<br><em>DIFFERENT</em></h2>
+        <p class="ch-text">
+          Scroll to move through the experience. The wireframe car moves as you explore — a metaphor for the journey of creation.
+        </p>
+        <div class="tag-row">
+          <span class="tag">Motion Design</span>
+          <span class="tag">3D</span>
+          <span class="tag">Branding</span>
         </div>
       </div>
+      <div class="chapter-index">003 / 005</div>
     </section>
 
-    <!-- ===== SECTION: CONTACT US ===== -->
-    <section class="section section-contact" id="contact">
-      <div class="contact-grid">
-        <div class="contact-left">
-          <div class="section-label">GET IN TOUCH</div>
-          <h2 class="section-heading">Let's build something <span class="gradient-text">extraordinary</span>.</h2>
-          <p class="contact-text">Have a project in mind? We'd love to hear about it. Drop us a message and we'll get back to you within 24 hours.</p>
-          <div class="contact-info">
-            <div class="contact-item">
-              <span class="contact-icon">📧</span>
-              <div>
-                <span class="contact-item-label">Email</span>
-                <span class="contact-item-value">hello@codevibe.studio</span>
-              </div>
-            </div>
-            <div class="contact-item">
-              <span class="contact-icon">📍</span>
-              <div>
-                <span class="contact-item-label">Location</span>
-                <span class="contact-item-value">San Francisco, CA</span>
-              </div>
-            </div>
-            <div class="contact-item">
-              <span class="contact-icon">📱</span>
-              <div>
-                <span class="contact-item-label">Phone</span>
-                <span class="contact-item-value">+1 (555) 123-4567</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="contact-right">
-          <form class="contact-form" id="contactForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="firstName">First Name</label>
-                <input type="text" id="firstName" placeholder="John" autocomplete="given-name">
-              </div>
-              <div class="form-group">
-                <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" placeholder="Doe" autocomplete="family-name">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="email">Email Address</label>
-              <input type="email" id="email" placeholder="john@example.com" autocomplete="email">
-            </div>
-            <div class="form-group">
-              <label for="message">Your Message</label>
-              <textarea id="message" rows="4" placeholder="Tell us about your project..."></textarea>
-            </div>
-            <button type="submit" class="btn-submit">
-              <span>Send Message</span>
-              <span class="btn-arrow">→</span>
-            </button>
-          </form>
+    <!-- CH 3 -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-content left-align">
+        <div class="ch-label">CHAPTER IV — THE MACHINE</div>
+        <h2 class="ch-title">THE<br><em>MACHINE</em></h2>
+        <p class="ch-text">
+          The background responds to your scroll. Time moves with you — not the other way around.
+        </p>
+        <div class="quote-block">
+          "Design is not just what it looks like. Design is how it works."
         </div>
       </div>
+      <div class="chapter-index">004 / 005</div>
     </section>
 
-    <!-- ===== SECTION: AUTH (Sign In / Sign Up) ===== -->
-    <section class="section section-auth" id="auth">
-      <div class="auth-container">
-        <div class="auth-card">
-          <div class="auth-tabs">
-            <button class="auth-tab active" id="tabSignIn" data-tab="signin">Sign In</button>
-            <button class="auth-tab" id="tabSignUp" data-tab="signup">Sign Up</button>
-          </div>
-
-          <!-- Sign In Form -->
-          <form class="auth-form" id="formSignIn">
-            <h3>Welcome back</h3>
-            <p class="auth-subtitle">Sign in to your account to continue</p>
-            <div class="form-group">
-              <label for="signinEmail">Email</label>
-              <input type="email" id="signinEmail" placeholder="you@example.com" autocomplete="email">
-            </div>
-            <div class="form-group">
-              <label for="signinPassword">Password</label>
-              <input type="password" id="signinPassword" placeholder="••••••••" autocomplete="current-password">
-            </div>
-            <div class="form-options">
-              <label class="checkbox-label">
-                <input type="checkbox"> Remember me
-              </label>
-              <a href="#" class="forgot-link">Forgot password?</a>
-            </div>
-            <button type="submit" class="btn-submit btn-auth-submit">
-              <span>Sign In</span>
-              <span class="btn-arrow">→</span>
-            </button>
-            <div class="auth-divider"><span>or continue with</span></div>
-            <div class="social-buttons">
-              <button type="button" class="social-btn">G</button>
-              <button type="button" class="social-btn">𝕏</button>
-              <button type="button" class="social-btn">◉</button>
-            </div>
-          </form>
-
-          <!-- Sign Up Form -->
-          <form class="auth-form hidden" id="formSignUp">
-            <h3>Create account</h3>
-            <p class="auth-subtitle">Join Code Vibe and start building</p>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="signupFirst">First Name</label>
-                <input type="text" id="signupFirst" placeholder="John" autocomplete="given-name">
-              </div>
-              <div class="form-group">
-                <label for="signupLast">Last Name</label>
-                <input type="text" id="signupLast" placeholder="Doe" autocomplete="family-name">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="signupEmail">Email</label>
-              <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email">
-            </div>
-            <div class="form-group">
-              <label for="signupPassword">Password</label>
-              <input type="password" id="signupPassword" placeholder="Min 8 characters" autocomplete="new-password">
-            </div>
-            <button type="submit" class="btn-submit btn-auth-submit">
-              <span>Create Account</span>
-              <span class="btn-arrow">→</span>
-            </button>
-          </form>
-        </div>
+    <!-- CH 4 - FINAL -->
+    <section class="chapter final-chapter" id="ch4">
+      <div class="chapter-content center-align">
+        <div class="ch-label">CHAPTER V — IGNITION</div>
+        <h2 class="ch-title glitch" data-text="IGNITION">IGNITION</h2>
+        <p class="ch-text">
+          A cinematic interactive scrolling experience. The future of creative portfolios.
+        </p>
+        <a class="cta-btn" href="#">
+          <span>START A PROJECT</span>
+          <div class="btn-line"></div>
+        </a>
       </div>
+      <div class="chapter-index">005 / 005</div>
     </section>
 
-    <!-- ===== FOOTER ===== -->
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-top">
-          <div class="footer-brand">
-            <span class="logo-icon">◆</span>
-            <span class="logo-text">CODE VIBE</span>
-            <p class="footer-tagline">Crafting digital futures, one pixel at a time.</p>
-          </div>
-          <div class="footer-links-grid">
-            <div>
-              <h4>Company</h4>
-              <a href="#about">About</a>
-              <a href="#services">Services</a>
-              <a href="#">Careers</a>
-            </div>
-            <div>
-              <h4>Resources</h4>
-              <a href="#">Blog</a>
-              <a href="#">Documentation</a>
-              <a href="#">Support</a>
-            </div>
-            <div>
-              <h4>Legal</h4>
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
-              <a href="#">Cookies</a>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>© 2026 Code Vibe. All rights reserved.</p>
-          <div class="footer-socials">
-            <a href="#" aria-label="Twitter">𝕏</a>
-            <a href="#" aria-label="GitHub">◉</a>
-            <a href="#" aria-label="LinkedIn">in</a>
-          </div>
-        </div>
-      </div>
-    </footer>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
-</body>
+  <!-- SIDE LABEL -->
+  <div class="side-label">CREATIVE DIRECTOR — PORTFOLIO</div>
 
+  <script type="module" src="src/main.js"></script>
+</body>
 </html>

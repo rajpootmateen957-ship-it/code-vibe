@@ -5,355 +5,454 @@ import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ============================================================
-// 1. SMOOTH SCROLL (Lenis) synced with GSAP ScrollTrigger
-// ============================================================
-const lenis = new Lenis({
-  duration: 1.4,
-  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  smooth: true,
+/* ══════════════════════════════════
+   LOADER
+══════════════════════════════════ */
+const loaderEl    = document.getElementById('loader');
+const loaderCount = document.getElementById('loaderCount');
+
+let progress = 0;
+
+const loadInterval = setInterval(() => {
+  progress += Math.random() * 12;
+  if (progress >= 100) {
+    progress = 100;
+    clearInterval(loadInterval);
+
+    // count to 100 then fade out
+    gsap.to({}, {
+      duration: 0.4,
+      delay: 0.3,
+      onComplete: () => {
+        gsap.to(loaderEl, {
+          opacity: 0,
+          duration: 1,
+          delay: 0.2,
+          ease: 'power2.inOut',
+          onComplete: () => {
+            loaderEl.style.display = 'none';
+            introAnimation();
+          }
+        });
+      }
+    });
+  }
+
+  const n = Math.floor(progress);
+  loaderCount.innerText = n < 10 ? '0' + n : n;
+}, 70);
+
+/* ══════════════════════════════════
+   INTRO ANIMATION
+══════════════════════════════════ */
+function introAnimation() {
+  const heroLines = document.querySelectorAll('.hero-line');
+  const eyebrow   = document.querySelector('.hero-eyebrow');
+  const heroSub   = document.querySelector('.hero-sub');
+  const scrollHint= document.querySelector('.hero-scroll-hint');
+  const nav       = document.querySelector('.nav');
+
+  gsap.set([...heroLines, eyebrow, heroSub, scrollHint], {
+    y: 60,
+    opacity: 0
+  });
+  gsap.set(nav, { y: -20, opacity: 0 });
+
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  tl.to(nav,       { y: 0, opacity: 1, duration: 0.8 })
+    .to(eyebrow,   { y: 0, opacity: 1, duration: 0.8 }, '-=0.4')
+    .to(heroLines, { y: 0, opacity: 1, duration: 1.1, stagger: 0.12 }, '-=0.5')
+    .to(heroSub,   { y: 0, opacity: 1, duration: 0.8 }, '-=0.6')
+    .to(scrollHint,{ y: 0, opacity: 1, duration: 0.6 }, '-=0.4');
+}
+
+/* ══════════════════════════════════
+   CURSOR
+══════════════════════════════════ */
+const cursor = document.getElementById('cursor');
+const dot    = document.getElementById('cursorDot');
+
+window.addEventListener('mousemove', (e) => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.35, ease: 'power2.out' });
+  gsap.to(dot,    { x: e.clientX, y: e.clientY, duration: 0.08 });
 });
 
+/* ══════════════════════════════════
+   LENIS SMOOTH SCROLL
+══════════════════════════════════ */
+const lenis = new Lenis({ smoothWheel: true, lerp: 0.08 });
+
 lenis.on('scroll', ScrollTrigger.update);
+
 gsap.ticker.add((time) => lenis.raf(time * 1000));
 gsap.ticker.lagSmoothing(0);
 
-// ============================================================
-// 2. THREE.JS SCENE — Interactive Mesh + Particle Field
-// ============================================================
-const canvas = document.querySelector('#webgl');
-const scene = new THREE.Scene();
+/* ══════════════════════════════════
+   PROGRESS BAR
+══════════════════════════════════ */
+const progressBar = document.getElementById('progress');
 
-const sizes = { width: window.innerWidth, height: window.innerHeight };
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 200);
-camera.position.set(0, 0, 6);
+window.addEventListener('scroll', () => {
+  const total   = document.documentElement.scrollHeight - window.innerHeight;
+  const percent = (window.scrollY / total) * 100;
+  progressBar.style.width = percent + '%';
+});
+
+/* ══════════════════════════════════
+   NAV SCROLL EFFECT
+══════════════════════════════════ */
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* ══════════════════════════════════
+   VIDEO SCROLL CONTROL
+══════════════════════════════════ */
+const bgVideo = document.getElementById('bgVideo');
+bgVideo.pause();
+
+let videoReady = false;
+bgVideo.addEventListener('loadedmetadata', () => { videoReady = true; });
+
+window.addEventListener('scroll', () => {
+  if (!videoReady || !bgVideo.duration) return;
+  const maxScroll   = document.body.scrollHeight - window.innerHeight;
+  const fraction    = window.scrollY / maxScroll;
+  bgVideo.currentTime = bgVideo.duration * fraction;
+});
+
+/* ══════════════════════════════════
+   THREE.JS SETUP
+══════════════════════════════════ */
+const canvas   = document.getElementById('webgl');
+const scene    = new THREE.Scene();
+
+const camera   = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+camera.position.set(0, 0.5, 7);
 scene.add(camera);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setSize(sizes.width, sizes.height);
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.setClearColor(0x000000, 0);
 
-// --- The Hero Mesh (TorusKnot) ---
-const meshGeometry = new THREE.TorusKnotGeometry(1.2, 0.35, 256, 64);
-const meshMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x6c5ce7,
-  roughness: 0.15,
-  metalness: 0.9,
-  wireframe: false,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.1,
-  emissive: 0x1a1a2e,
-  emissiveIntensity: 0.3,
-});
-const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
-scene.add(mesh);
-
-// --- Background Particles ---
-const particlesCount = 2000;
-const particlePositions = new Float32Array(particlesCount * 3);
-for (let i = 0; i < particlesCount * 3; i++) {
-  particlePositions[i] = (Math.random() - 0.5) * 30;
-}
-const particlesGeo = new THREE.BufferGeometry();
-particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-const particlesMat = new THREE.PointsMaterial({
-  size: 0.02,
-  color: 0xffffff,
-  transparent: true,
-  opacity: 0.6,
-  blending: THREE.AdditiveBlending,
-  depthWrite: false,
-});
-const particles = new THREE.Points(particlesGeo, particlesMat);
-scene.add(particles);
-
-// --- Lights ---
+/* ── LIGHTS ── */
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
-const mainLight = new THREE.PointLight(0x6c5ce7, 5, 30);
-mainLight.position.set(3, 4, 5);
-scene.add(mainLight);
+const goldLight = new THREE.PointLight(0xc8a96e, 3, 20);
+goldLight.position.set(4, 2, 4);
+scene.add(goldLight);
 
-const secondLight = new THREE.PointLight(0x00d2ff, 4, 30);
-secondLight.position.set(-3, -2, 4);
-scene.add(secondLight);
+const blueLight = new THREE.PointLight(0x4488ff, 1.5, 20);
+blueLight.position.set(-4, -2, 3);
+scene.add(blueLight);
 
-const rimLight = new THREE.PointLight(0xff6b6b, 2, 20);
-rimLight.position.set(0, 5, -5);
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+rimLight.position.set(0, 3, -5);
 scene.add(rimLight);
 
-// ============================================================
-// 3. MOUSE PARALLAX
-// ============================================================
-let mouseX = 0, mouseY = 0;
-document.addEventListener('mousemove', (e) => {
-  mouseX = (e.clientX / sizes.width - 0.5) * 2;
-  mouseY = (e.clientY / sizes.height - 0.5) * 2;
+/* ── WIREFRAME CAR (built from primitives) ── */
+const carGroup = new THREE.Group();
+scene.add(carGroup);
+
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0xc8a96e,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.55
 });
 
-// ============================================================
-// 4. SCROLL-DRIVEN MESH ANIMATIONS (GSAP ScrollTrigger)
-// ============================================================
-
-// 4a. HOME — mesh centered, slowly rotating
-// (default position, handled in render loop)
-
-// 4b. ABOUT — mesh moves right + changes color
-const aboutTL = gsap.timeline({
-  scrollTrigger: {
-    trigger: '#about',
-    start: 'top bottom',
-    end: 'bottom top',
-    scrub: 1,
-  },
-});
-aboutTL
-  .to(mesh.position, { x: 3, y: 0.5, z: 3 }, 0)
-  .to(mesh.rotation, { y: Math.PI }, 0)
-  .to(meshMaterial.color, { r: 0, g: 0.82, b: 1 }, 0)      // cyan
-  .to(meshMaterial.emissive, { r: 0, g: 0.1, b: 0.2 }, 0);
-
-// 4c. SERVICES — mesh moves left + changes color
-const servicesTL = gsap.timeline({
-  scrollTrigger: {
-    trigger: '#services',
-    start: 'top bottom',
-    end: 'bottom top',
-    scrub: 1,
-  },
-});
-servicesTL
-  .to(mesh.position, { x: -3, y: -0.5, z: 2 }, 0)
-  .to(mesh.rotation, { y: Math.PI * 2, x: Math.PI * 0.5 }, 0)
-  .to(meshMaterial.color, { r: 1, g: 0.42, b: 0.42 }, 0)    // coral
-  .to(meshMaterial.emissive, { r: 0.2, g: 0.05, b: 0.05 }, 0);
-
-// 4d. CONTACT — mesh moves to center-right
-const contactTL = gsap.timeline({
-  scrollTrigger: {
-    trigger: '#contact',
-    start: 'top bottom',
-    end: 'bottom top',
-    scrub: 1,
-  },
-});
-contactTL
-  .to(mesh.position, { x: 2, y: 0, z: 4 }, 0)
-  .to(mesh.rotation, { y: Math.PI * 3, z: Math.PI * 0.3 }, 0)
-  .to(meshMaterial.color, { r: 0.42, g: 0.36, b: 0.9 }, 0)  // purple
-  .to(meshMaterial.emissive, { r: 0.1, g: 0.08, b: 0.18 }, 0);
-
-// 4e. AUTH — mesh zooms out & becomes small background element
-const authTL = gsap.timeline({
-  scrollTrigger: {
-    trigger: '#auth',
-    start: 'top bottom',
-    end: 'bottom top',
-    scrub: 1,
-  },
-});
-authTL
-  .to(mesh.position, { x: 0, y: 0, z: -5 }, 0)
-  .to(mesh.scale, { x: 0.5, y: 0.5, z: 0.5 }, 0)
-  .to(mesh.rotation, { y: Math.PI * 4 }, 0)
-  .to(meshMaterial.color, { r: 0.42, g: 0.36, b: 0.9 }, 0);
-
-// ============================================================
-// 5. GSAP REVEAL ANIMATIONS FOR CONTENT
-// ============================================================
-
-// Navbar intro
-gsap.from('.navbar', {
-  y: -100,
-  opacity: 0,
-  duration: 1.2,
-  ease: 'power3.out',
-  delay: 0.3,
+const wireMatDim = new THREE.MeshBasicMaterial({
+  color: 0x886633,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.25
 });
 
-// Hero animations
-const heroTL = gsap.timeline({ delay: 0.5 });
-heroTL
-  .from('.hero-badge', { y: 30, opacity: 0, duration: 0.8 })
-  .from('.hero-title', { y: 60, opacity: 0, duration: 1, ease: 'power3.out' }, '-=0.4')
-  .from('.hero-description', { y: 40, opacity: 0, duration: 0.8 }, '-=0.5')
-  .from('.hero-cta', { y: 30, opacity: 0, duration: 0.8 }, '-=0.4')
-  .from('.stat', { y: 40, opacity: 0, duration: 0.6, stagger: 0.15 }, '-=0.3')
-  .from('.scroll-indicator', { opacity: 0, duration: 1 }, '-=0.3');
+// ─ Body (main hull) ─
+const bodyGeo  = new THREE.BoxGeometry(3.2, 0.55, 1.4, 8, 3, 5);
+const body     = new THREE.Mesh(bodyGeo, wireMat);
+body.position.y = 0.1;
+carGroup.add(body);
 
-// Counter animation for stats
-document.querySelectorAll('.stat-number').forEach(el => {
-  const target = parseInt(el.getAttribute('data-count'));
-  ScrollTrigger.create({
-    trigger: el,
-    start: 'top 90%',
-    once: true,
-    onEnter: () => {
-      gsap.to(el, {
-        innerText: target,
-        duration: 2,
-        snap: { innerText: 1 },
-        ease: 'power2.out',
-      });
-    },
-  });
-});
+// ─ Cabin / roof ─
+const cabinGeo = new THREE.BoxGeometry(1.8, 0.5, 1.25, 6, 3, 4);
+const cabin    = new THREE.Mesh(cabinGeo, wireMat);
+cabin.position.set(-0.1, 0.52, 0);
+carGroup.add(cabin);
 
-// About section reveals
-gsap.from('.section-about .section-label', {
-  scrollTrigger: { trigger: '#about', start: 'top 75%' },
-  x: -60, opacity: 0, duration: 0.8,
-});
-gsap.from('.section-about .section-heading', {
-  scrollTrigger: { trigger: '#about', start: 'top 70%' },
-  y: 60, opacity: 0, duration: 1,
-});
-gsap.from('.about-text', {
-  scrollTrigger: { trigger: '#about', start: 'top 65%' },
-  y: 40, opacity: 0, duration: 0.8, stagger: 0.2,
-});
-gsap.from('.feature', {
-  scrollTrigger: { trigger: '.about-features', start: 'top 80%' },
-  y: 50, opacity: 0, duration: 0.7, stagger: 0.15,
+// ─ Front hood slope ─
+const hoodGeo = new THREE.CylinderGeometry(0.01, 0.55, 1.0, 6, 3, true);
+const hood    = new THREE.Mesh(hoodGeo, wireMatDim);
+hood.rotation.z = Math.PI * 0.5;
+hood.position.set(1.35, 0.38, 0);
+carGroup.add(hood);
+
+// ─ Rear slope ─
+const rearGeo = new THREE.CylinderGeometry(0.55, 0.01, 0.85, 6, 3, true);
+const rear    = new THREE.Mesh(rearGeo, wireMatDim);
+rear.rotation.z = Math.PI * 0.5;
+rear.position.set(-1.25, 0.38, 0);
+carGroup.add(rear);
+
+// ─ Wheels ─
+const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 18, 2);
+const wheelMat = new THREE.MeshBasicMaterial({
+  color: 0xc8a96e,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.7
 });
 
-// Services section reveals
-gsap.from('.section-services .section-label', {
-  scrollTrigger: { trigger: '#services', start: 'top 75%' },
-  x: -60, opacity: 0, duration: 0.8,
-});
-gsap.from('.section-services .section-heading', {
-  scrollTrigger: { trigger: '#services', start: 'top 70%' },
-  y: 60, opacity: 0, duration: 1,
-});
-gsap.from('.service-card', {
-  scrollTrigger: { trigger: '.services-grid', start: 'top 80%' },
-  y: 80, opacity: 0, duration: 0.8,
-  stagger: { amount: 0.6, from: 'start' },
+const wheelPositions = [
+  [ 1.15, -0.3,  0.82],
+  [ 1.15, -0.3, -0.82],
+  [-1.15, -0.3,  0.82],
+  [-1.15, -0.3, -0.82]
+];
+
+const wheels = [];
+wheelPositions.forEach(pos => {
+  const w = new THREE.Mesh(wheelGeo, wheelMat);
+  w.rotation.x = Math.PI * 0.5;
+  w.position.set(...pos);
+  carGroup.add(w);
+  wheels.push(w);
+
+  // Hub ring
+  const hubGeo = new THREE.TorusGeometry(0.2, 0.03, 6, 12);
+  const hub    = new THREE.Mesh(hubGeo, wheelMat);
+  hub.position.set(...pos);
+  carGroup.add(hub);
+
+  // Spoke cross
+  const spokeGeo = new THREE.BoxGeometry(0.38, 0.03, 0.03, 4, 1, 1);
+  const spoke1   = new THREE.Mesh(spokeGeo, wheelMat);
+  spoke1.position.set(...pos);
+  carGroup.add(spoke1);
+
+  const spoke2 = new THREE.Mesh(spokeGeo, wheelMat);
+  spoke2.position.set(...pos);
+  spoke2.rotation.z = Math.PI * 0.5;
+  carGroup.add(spoke2);
 });
 
-// Contact section reveals
-gsap.from('.contact-left', {
-  scrollTrigger: { trigger: '#contact', start: 'top 70%' },
-  x: -80, opacity: 0, duration: 1,
+// ─ Windshield lines ─
+const windGeo = new THREE.PlaneGeometry(0.9, 0.45, 4, 3);
+const windMat = new THREE.MeshBasicMaterial({
+  color: 0x88aaff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.3,
+  side: THREE.DoubleSide
 });
-gsap.from('.contact-right', {
-  scrollTrigger: { trigger: '#contact', start: 'top 70%' },
-  x: 80, opacity: 0, duration: 1,
+const windshield = new THREE.Mesh(windGeo, windMat);
+windshield.position.set(0.72, 0.62, 0);
+windshield.rotation.y = Math.PI * 0.5;
+windshield.rotation.z = 0.3;
+carGroup.add(windshield);
+
+// ─ Headlights ─
+const lightGeo = new THREE.SphereGeometry(0.1, 8, 6);
+const lightMat = new THREE.MeshBasicMaterial({ color: 0xfff5cc, transparent: true, opacity: 0.9 });
+[-0.38, 0.38].forEach(z => {
+  const hl = new THREE.Mesh(lightGeo, lightMat);
+  hl.position.set(1.62, 0.05, z);
+  carGroup.add(hl);
+
+  // Point light from headlight
+  const hLight = new THREE.PointLight(0xfff0aa, 0.8, 4);
+  hLight.position.set(1.62, 0.05, z);
+  carGroup.add(hLight);
 });
 
-// Auth section reveals
-gsap.from('.auth-card', {
-  scrollTrigger: { trigger: '#auth', start: 'top 75%' },
-  y: 80, opacity: 0, scale: 0.9, duration: 1, ease: 'back.out(1.7)',
+// ─ Ground grid ─
+const gridHelper = new THREE.GridHelper(12, 20, 0xc8a96e, 0x333222);
+gridHelper.position.y = -0.68;
+gridHelper.material.transparent = true;
+gridHelper.material.opacity = 0.18;
+scene.add(gridHelper);
+
+// ─ Ground reflection plane ─
+const groundGeo = new THREE.PlaneGeometry(12, 6, 1, 1);
+const groundMat = new THREE.MeshBasicMaterial({
+  color: 0xc8a96e,
+  transparent: true,
+  opacity: 0.03,
+  side: THREE.DoubleSide
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = Math.PI * 0.5;
+ground.position.y = -0.68;
+scene.add(ground);
+
+/* ── PARTICLES ── */
+const particleCount = 200;
+const positions = new Float32Array(particleCount * 3);
+
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3]     = (Math.random() - 0.5) * 16;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 8;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+}
+
+const partGeo = new THREE.BufferGeometry();
+partGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+const partMat = new THREE.PointsMaterial({
+  color: 0xc8a96e,
+  size: 0.04,
+  transparent: true,
+  opacity: 0.4,
+  sizeAttenuation: true
 });
 
-// Footer reveal
-gsap.from('.footer-top', {
-  scrollTrigger: { trigger: '.footer', start: 'top 90%' },
-  y: 40, opacity: 0, duration: 0.8,
-});
+const particles = new THREE.Points(partGeo, partMat);
+scene.add(particles);
 
-// ============================================================
-// 6. NAVBAR SCROLL BEHAVIOR
-// ============================================================
-let lastScroll = 0;
+/* ══════════════════════════════════
+   SCROLL-DRIVEN CAR ANIMATION
+══════════════════════════════════ */
+const maxScroll = () => document.body.scrollHeight - window.innerHeight;
+
+// Map scroll fraction to car states
+let targetRotY  = 0;
+let targetPosX  = 0;
+let targetPosY  = 0;
+let scrollFrac  = 0;
+
 window.addEventListener('scroll', () => {
-  const navbar = document.getElementById('navbar');
-  const currentScroll = window.scrollY;
-  if (currentScroll > 100) {
-    navbar.classList.add('scrolled');
-  } else {
-    navbar.classList.remove('scrolled');
+  scrollFrac = window.scrollY / maxScroll();
+});
+
+/* ══════════════════════════════════
+   CHAPTER REVEAL ANIMATIONS (GSAP)
+══════════════════════════════════ */
+document.querySelectorAll('.chapter-content').forEach(el => {
+  gsap.fromTo(el,
+    { opacity: 0, y: 50 },
+    {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 75%',
+        end: 'top 40%',
+        scrub: false,
+        toggleActions: 'play none none reverse'
+      }
+    }
+  );
+});
+
+// Stats counter
+document.querySelectorAll('.stat span').forEach(el => {
+  const text = el.innerText;
+  if (!isNaN(parseInt(text))) {
+    const end = parseInt(text);
+    gsap.from({ val: 0 }, {
+      val: end,
+      duration: 2,
+      ease: 'power2.out',
+      scrollTrigger: { trigger: el, start: 'top 80%' },
+      onUpdate: function() {
+        el.innerText = Math.floor(this.targets()[0].val) + '+';
+      }
+    });
   }
-  lastScroll = currentScroll;
 });
 
-// Active nav link highlighting
-const sections = document.querySelectorAll('.section[id]');
-const navLinks = document.querySelectorAll('.nav-link');
-window.addEventListener('scroll', () => {
-  let current = '';
-  sections.forEach(sec => {
-    const sectionTop = sec.offsetTop - 200;
-    if (window.scrollY >= sectionTop) current = sec.getAttribute('id');
-  });
-  navLinks.forEach(link => {
-    link.classList.remove('active');
-    if (link.getAttribute('href') === '#' + current) link.classList.add('active');
-  });
-});
-
-// ============================================================
-// 7. MOBILE MENU
-// ============================================================
-const hamburger = document.getElementById('hamburger');
-const mobileMenu = document.getElementById('mobileMenu');
-hamburger.addEventListener('click', () => {
-  hamburger.classList.toggle('active');
-  mobileMenu.classList.toggle('open');
-});
-document.querySelectorAll('.mobile-link').forEach(link => {
-  link.addEventListener('click', () => {
-    hamburger.classList.remove('active');
-    mobileMenu.classList.remove('open');
-  });
-});
-
-// ============================================================
-// 8. AUTH TABS
-// ============================================================
-document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const target = tab.getAttribute('data-tab');
-    document.getElementById('formSignIn').classList.toggle('hidden', target !== 'signin');
-    document.getElementById('formSignUp').classList.toggle('hidden', target !== 'signup');
-  });
-});
-
-// ============================================================
-// 9. RENDER LOOP
-// ============================================================
+/* ══════════════════════════════════
+   ANIMATION LOOP
+══════════════════════════════════ */
 const clock = new THREE.Clock();
+let mouseX = 0, mouseY = 0;
 
-const tick = () => {
+window.addEventListener('mousemove', (e) => {
+  mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+function animate() {
   const elapsed = clock.getElapsedTime();
 
-  // Constant slow rotation of mesh
-  mesh.rotation.y += 0.003;
-  mesh.rotation.x += 0.001;
+  // ── Scroll-driven car behavior ──
+  const s = scrollFrac;
 
-  // Mouse parallax on camera
-  camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.05;
-  camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.05;
-  camera.lookAt(mesh.position);
+  // Chapter 0 → 1: car enters from right, faces forward
+  // Chapter 1 → 2: car rotates to show side
+  // Chapter 2 → 3: car rotates to 3/4 view, moves
+  // Chapter 3 → 4: car spins full, centers
 
-  // Animate particles
-  particles.rotation.y = elapsed * 0.03;
-  particles.rotation.x = elapsed * 0.01;
+  if (s < 0.25) {
+    targetRotY = gsap.utils.mapRange(0, 0.25, 0, Math.PI * 0.25, s);
+    targetPosX = gsap.utils.mapRange(0, 0.25, 2.5, 0, s);
+    targetPosY = 0;
+    carGroup.scale.setScalar(gsap.utils.mapRange(0, 0.25, 0.6, 1, s));
+  } else if (s < 0.5) {
+    targetRotY = gsap.utils.mapRange(0.25, 0.5, Math.PI * 0.25, Math.PI * 0.6, s);
+    targetPosX = gsap.utils.mapRange(0.25, 0.5, 0, -1, s);
+    targetPosY = 0;
+    carGroup.scale.setScalar(1);
+  } else if (s < 0.75) {
+    targetRotY = gsap.utils.mapRange(0.5, 0.75, Math.PI * 0.6, Math.PI * 1.1, s);
+    targetPosX = gsap.utils.mapRange(0.5, 0.75, -1, 0.5, s);
+    targetPosY = gsap.utils.mapRange(0.5, 0.75, 0, 0.3, s);
+    carGroup.scale.setScalar(1);
+  } else {
+    targetRotY = gsap.utils.mapRange(0.75, 1, Math.PI * 1.1, Math.PI * 2, s);
+    targetPosX = gsap.utils.mapRange(0.75, 1, 0.5, 0, s);
+    targetPosY = 0;
+    carGroup.scale.setScalar(gsap.utils.mapRange(0.75, 1, 1, 1.1, s));
+  }
 
-  // Pulse light intensity
-  mainLight.intensity = 5 + Math.sin(elapsed * 2) * 1;
-  secondLight.intensity = 4 + Math.cos(elapsed * 1.5) * 1;
+  // Smooth lerp for car
+  carGroup.rotation.y += (targetRotY - carGroup.rotation.y) * 0.06;
+  carGroup.position.x += (targetPosX - carGroup.position.x) * 0.06;
+  carGroup.position.y += (targetPosY - carGroup.position.y) * 0.06;
+
+  // Subtle mouse-driven tilt
+  carGroup.rotation.x += (-mouseY * 0.06 - carGroup.rotation.x) * 0.04;
+  carGroup.rotation.z += (-mouseX * 0.02 - carGroup.rotation.z) * 0.04;
+
+  // Float bob
+  carGroup.position.y += Math.sin(elapsed * 0.8) * 0.003;
+
+  // Spin wheels
+  wheels.forEach(w => { w.rotation.y += 0.04; });
+
+  // Oscillating lights
+  goldLight.intensity = 2.5 + Math.sin(elapsed * 1.2) * 0.8;
+  goldLight.position.x = 4 + Math.sin(elapsed * 0.5) * 1;
+
+  // Drift particles slowly
+  particles.rotation.y = elapsed * 0.015;
+  particles.rotation.x = elapsed * 0.008;
+
+  // Grid scroll with car
+  gridHelper.position.z = (elapsed * 0.3) % 0.6;
 
   renderer.render(scene, camera);
-  requestAnimationFrame(tick);
-};
-tick();
+  requestAnimationFrame(animate);
+}
 
-// ============================================================
-// 10. RESIZE
-// ============================================================
+animate();
+
+/* ══════════════════════════════════
+   RESIZE
+══════════════════════════════════ */
 window.addEventListener('resize', () => {
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-  camera.aspect = sizes.width / sizes.height;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(sizes.width, sizes.height);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
