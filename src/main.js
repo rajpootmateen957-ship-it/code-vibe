@@ -317,6 +317,21 @@ const partMat = new THREE.PointsMaterial({
 const particles = new THREE.Points(partGeo, partMat);
 scene.add(particles);
 
+/* ── CAR PATH ── */
+const pathPoints = [
+  new THREE.Vector3(0, 0, 0),       // Start at center
+  new THREE.Vector3(1.5, -0.3, 0.5), // Curve right and down
+  new THREE.Vector3(0.5, -0.8, -0.3), // Curve left
+  new THREE.Vector3(-1, -1.2, 0.8),  // Curve left and down
+  new THREE.Vector3(0, -1.5, 0),     // Center down
+  new THREE.Vector3(0.8, -1.8, -0.5), // Continue down right
+  new THREE.Vector3(-0.5, -2.2, 0.3), // Curve left
+  new THREE.Vector3(0, -2.5, 0)       // End low
+];
+
+const carPath = new THREE.CatmullRomCurve3(pathPoints);
+carPath.closed = false;
+
 /* ══════════════════════════════════
    SCROLL-DRIVEN CAR ANIMATION
 ══════════════════════════════════ */
@@ -326,11 +341,53 @@ const maxScroll = () => document.body.scrollHeight - window.innerHeight;
 let targetRotY  = 0;
 let targetPosX  = 0;
 let targetPosY  = 0;
+let targetPosZ  = 0;
 let scrollFrac  = 0;
 
 window.addEventListener('scroll', () => {
   scrollFrac = window.scrollY / maxScroll();
 });
+
+/* ── TRAIL PARTICLES ── */
+const trailCount = 50;
+const trailPositions = new Float32Array(trailCount * 3);
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+
+const trailMat = new THREE.PointsMaterial({
+  color: 0xffaa44,
+  size: 0.08,
+  transparent: true,
+  opacity: 0.6,
+  sizeAttenuation: true
+});
+
+const trailParticles = new THREE.Points(trailGeo, trailMat);
+scene.add(trailParticles);
+
+let trailHistory = [];
+
+/* ── CAR GLOW EFFECT ── */
+const glowLight = new THREE.PointLight(0xffaa44, 2, 8);
+glowLight.position.set(0, 0, 0);
+scene.add(glowLight);
+
+/* ── SPARKLE PARTICLES ── */
+const sparkleCount = 100;
+const sparklePositions = new Float32Array(sparkleCount * 3);
+const sparkleGeo = new THREE.BufferGeometry();
+sparkleGeo.setAttribute('position', new THREE.BufferAttribute(sparklePositions, 3));
+
+const sparkleMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.02,
+  transparent: true,
+  opacity: 0.8,
+  sizeAttenuation: true
+});
+
+const sparkles = new THREE.Points(sparkleGeo, sparkleMat);
+scene.add(sparkles);
 
 /* ══════════════════════════════════
    CHAPTER REVEAL ANIMATIONS (GSAP)
@@ -388,37 +445,65 @@ function animate() {
   // ── Scroll-driven car behavior ──
   const s = scrollFrac;
 
-  // Chapter 0 → 1: car enters from right, faces forward
-  // Chapter 1 → 2: car rotates to show side
-  // Chapter 2 → 3: car rotates to 3/4 view, moves
-  // Chapter 3 → 4: car spins full, centers
+  let pathProgress = 0;
+  let currentScale = 1;
 
   if (s < 0.25) {
-    targetRotY = gsap.utils.mapRange(0, 0.25, 0, Math.PI * 0.25, s);
-    targetPosX = gsap.utils.mapRange(0, 0.25, 2.5, 0, s);
-    targetPosY = 0;
-    carGroup.scale.setScalar(gsap.utils.mapRange(0, 0.25, 0.6, 1, s));
-  } else if (s < 0.5) {
-    targetRotY = gsap.utils.mapRange(0.25, 0.5, Math.PI * 0.25, Math.PI * 0.6, s);
-    targetPosX = gsap.utils.mapRange(0.25, 0.5, 0, -1, s);
-    targetPosY = 0;
-    carGroup.scale.setScalar(1);
-  } else if (s < 0.75) {
-    targetRotY = gsap.utils.mapRange(0.5, 0.75, Math.PI * 0.6, Math.PI * 1.1, s);
-    targetPosX = gsap.utils.mapRange(0.5, 0.75, -1, 0.5, s);
-    targetPosY = gsap.utils.mapRange(0.5, 0.75, 0, 0.3, s);
-    carGroup.scale.setScalar(1);
+    // Assembly phase: car assembles at start position
+    pathProgress = 0; // Stay at start
+    currentScale = gsap.utils.mapRange(0, 0.25, 0, 1, s);
   } else {
-    targetRotY = gsap.utils.mapRange(0.75, 1, Math.PI * 1.1, Math.PI * 2, s);
-    targetPosX = gsap.utils.mapRange(0.75, 1, 0.5, 0, s);
-    targetPosY = 0;
-    carGroup.scale.setScalar(gsap.utils.mapRange(0.75, 1, 1, 1.1, s));
+    // Movement phase: car moves down the path
+    pathProgress = gsap.utils.mapRange(0.25, 1, 0, 1, s);
+    currentScale = 1;
   }
+
+  // Get position from curved path
+  const pathPos = carPath.getPointAt(pathProgress);
+  targetPosX = pathPos.x;
+  targetPosY = pathPos.y;
+  targetPosZ = pathPos.z;
+
+  // Get tangent for rotation
+  const tangent = carPath.getTangentAt(pathProgress);
+  targetRotY = Math.atan2(tangent.x, tangent.z);
+
+  // Scale based on phase
+  carGroup.scale.setScalar(currentScale);
 
   // Smooth lerp for car
   carGroup.rotation.y += (targetRotY - carGroup.rotation.y) * 0.06;
   carGroup.position.x += (targetPosX - carGroup.position.x) * 0.06;
   carGroup.position.y += (targetPosY - carGroup.position.y) * 0.06;
+  carGroup.position.z += (targetPosZ - carGroup.position.z) * 0.06;
+
+  // ── Trail particles ──
+  trailHistory.push(carGroup.position.clone());
+  if (trailHistory.length > trailCount) {
+    trailHistory.shift();
+  }
+
+  for (let i = 0; i < trailHistory.length; i++) {
+    const pos = trailHistory[i];
+    trailPositions[i * 3] = pos.x;
+    trailPositions[i * 3 + 1] = pos.y;
+    trailPositions[i * 3 + 2] = pos.z;
+  }
+  trailGeo.attributes.position.needsUpdate = true;
+
+  // ── Glow light follows car ──
+  glowLight.position.copy(carGroup.position);
+  glowLight.intensity = 1.5 + Math.sin(elapsed * 2) * 0.5;
+
+  // ── Animate sparkles around car ──
+  for (let i = 0; i < sparkleCount; i++) {
+    const angle = (i / sparkleCount) * Math.PI * 2 + elapsed;
+    const radius = 0.5 + Math.sin(elapsed * 3 + i) * 0.2;
+    sparklePositions[i * 3] = carGroup.position.x + Math.cos(angle) * radius;
+    sparklePositions[i * 3 + 1] = carGroup.position.y + Math.sin(elapsed * 2 + i * 0.1) * 0.3;
+    sparklePositions[i * 3 + 2] = carGroup.position.z + Math.sin(angle) * radius;
+  }
+  sparkleGeo.attributes.position.needsUpdate = true;
 
   // Subtle mouse-driven tilt
   carGroup.rotation.x += (-mouseY * 0.06 - carGroup.rotation.x) * 0.04;
