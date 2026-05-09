@@ -64,6 +64,26 @@ function introAnimation() {
     .to(heroLines, { y: 0, opacity: 1, duration: 1.1, stagger: 0.12 }, '-=0.5')
     .to(heroSub,   { y: 0, opacity: 1, duration: 0.8 }, '-=0.6')
     .to(scrollHint,{ y: 0, opacity: 1, duration: 0.6 }, '-=0.4');
+
+  // Car assembly animation - parts move to form the vehicle
+  tl.add(() => {
+    carParts.forEach((part, i) => {
+      gsap.to(part.mesh.position, {
+        x: part.finalPos.x,
+        y: part.finalPos.y,
+        z: part.finalPos.z,
+        duration: 2,
+        delay: i * 0.12,
+        ease: 'power2.out'
+      });
+      gsap.to(part.mesh.material, {
+        opacity: part.finalOpacity,
+        duration: 2,
+        delay: i * 0.12,
+        ease: 'power2.out'
+      });
+    });
+  }, '-=1'); // Start assembly a bit before text finishes
 }
 
 /* ══════════════════════════════════
@@ -143,19 +163,23 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x000000, 0);
 
 /* ── LIGHTS ── */
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
-const goldLight = new THREE.PointLight(0xc8a96e, 3, 20);
-goldLight.position.set(4, 2, 4);
+const goldLight = new THREE.PointLight(0xc8a96e, 4, 25);
+goldLight.position.set(5, 3, 5);
 scene.add(goldLight);
 
-const blueLight = new THREE.PointLight(0x4488ff, 1.5, 20);
-blueLight.position.set(-4, -2, 3);
+const blueLight = new THREE.PointLight(0x4488ff, 2.5, 25);
+blueLight.position.set(-5, -1, 4);
 scene.add(blueLight);
 
-const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
-rimLight.position.set(0, 3, -5);
+const purpleLight = new THREE.PointLight(0xaa44ff, 2, 20);
+purpleLight.position.set(2, 2, -4);
+scene.add(purpleLight);
+
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+rimLight.position.set(0, 4, -6);
 scene.add(rimLight);
 
 /* ── WIREFRAME CAR (built from primitives) ── */
@@ -163,52 +187,62 @@ const carGroup = new THREE.Group();
 scene.add(carGroup);
 
 const wireMat = new THREE.MeshBasicMaterial({
-  color: 0xc8a96e,
+  color: 0xffdd66,
   wireframe: true,
   transparent: true,
-  opacity: 0.55
+  opacity: 0.75
 });
 
 const wireMatDim = new THREE.MeshBasicMaterial({
-  color: 0x886633,
+  color: 0xcc8844,
   wireframe: true,
   transparent: true,
   opacity: 0.25
 });
 
+const carParts = []; // Array to hold all parts for animation
+
 // ─ Body (main hull) ─
 const bodyGeo  = new THREE.BoxGeometry(3.2, 0.55, 1.4, 8, 3, 5);
 const body     = new THREE.Mesh(bodyGeo, wireMat);
-body.position.y = 0.1;
+body.position.set(0, -10, 0); // Start scattered
+body.material.opacity = 0;
 carGroup.add(body);
+carParts.push({ mesh: body, finalPos: new THREE.Vector3(0, 0.1, 0), finalOpacity: 0.55 });
 
 // ─ Cabin / roof ─
 const cabinGeo = new THREE.BoxGeometry(1.8, 0.5, 1.25, 6, 3, 4);
 const cabin    = new THREE.Mesh(cabinGeo, wireMat);
-cabin.position.set(-0.1, 0.52, 0);
+cabin.position.set(5, -10, 5); // Scattered
+cabin.material.opacity = 0;
 carGroup.add(cabin);
+carParts.push({ mesh: cabin, finalPos: new THREE.Vector3(-0.1, 0.52, 0), finalOpacity: 0.55 });
 
 // ─ Front hood slope ─
 const hoodGeo = new THREE.CylinderGeometry(0.01, 0.55, 1.0, 6, 3, true);
 const hood    = new THREE.Mesh(hoodGeo, wireMatDim);
 hood.rotation.z = Math.PI * 0.5;
-hood.position.set(1.35, 0.38, 0);
+hood.position.set(10, -10, 0); // Scattered
+hood.material.opacity = 0;
 carGroup.add(hood);
+carParts.push({ mesh: hood, finalPos: new THREE.Vector3(1.35, 0.38, 0), finalOpacity: 0.25 });
 
 // ─ Rear slope ─
 const rearGeo = new THREE.CylinderGeometry(0.55, 0.01, 0.85, 6, 3, true);
 const rear    = new THREE.Mesh(rearGeo, wireMatDim);
 rear.rotation.z = Math.PI * 0.5;
-rear.position.set(-1.25, 0.38, 0);
+rear.position.set(-5, -10, -5); // Scattered
+rear.material.opacity = 0;
 carGroup.add(rear);
+carParts.push({ mesh: rear, finalPos: new THREE.Vector3(-1.25, 0.38, 0), finalOpacity: 0.25 });
 
 // ─ Wheels ─
 const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 18, 2);
 const wheelMat = new THREE.MeshBasicMaterial({
-  color: 0xc8a96e,
+  color: 0xff9944,
   wireframe: true,
   transparent: true,
-  opacity: 0.7
+  opacity: 0.85
 });
 
 const wheelPositions = [
@@ -219,29 +253,37 @@ const wheelPositions = [
 ];
 
 const wheels = [];
-wheelPositions.forEach(pos => {
+wheelPositions.forEach((pos, i) => {
   const w = new THREE.Mesh(wheelGeo, wheelMat);
   w.rotation.x = Math.PI * 0.5;
-  w.position.set(...pos);
+  w.position.set(Math.random()*20 - 10, -10, Math.random()*20 - 10); // Scattered
+  w.material.opacity = 0;
   carGroup.add(w);
   wheels.push(w);
+  carParts.push({ mesh: w, finalPos: new THREE.Vector3(...pos), finalOpacity: 0.7 });
 
   // Hub ring
   const hubGeo = new THREE.TorusGeometry(0.2, 0.03, 6, 12);
   const hub    = new THREE.Mesh(hubGeo, wheelMat);
-  hub.position.set(...pos);
+  hub.position.copy(w.position);
+  hub.material.opacity = 0;
   carGroup.add(hub);
+  carParts.push({ mesh: hub, finalPos: new THREE.Vector3(...pos), finalOpacity: 0.7 });
 
   // Spoke cross
   const spokeGeo = new THREE.BoxGeometry(0.38, 0.03, 0.03, 4, 1, 1);
   const spoke1   = new THREE.Mesh(spokeGeo, wheelMat);
-  spoke1.position.set(...pos);
+  spoke1.position.copy(w.position);
+  spoke1.material.opacity = 0;
   carGroup.add(spoke1);
+  carParts.push({ mesh: spoke1, finalPos: new THREE.Vector3(...pos), finalOpacity: 0.7 });
 
   const spoke2 = new THREE.Mesh(spokeGeo, wheelMat);
-  spoke2.position.set(...pos);
+  spoke2.position.copy(w.position);
   spoke2.rotation.z = Math.PI * 0.5;
+  spoke2.material.opacity = 0;
   carGroup.add(spoke2);
+  carParts.push({ mesh: spoke2, finalPos: new THREE.Vector3(...pos), finalOpacity: 0.7 });
 });
 
 // ─ Windshield lines ─
@@ -250,27 +292,33 @@ const windMat = new THREE.MeshBasicMaterial({
   color: 0x88aaff,
   wireframe: true,
   transparent: true,
-  opacity: 0.3,
+  opacity: 0,
   side: THREE.DoubleSide
 });
 const windshield = new THREE.Mesh(windGeo, windMat);
-windshield.position.set(0.72, 0.62, 0);
+windshield.position.set(-10, -10, 10); // Scattered
 windshield.rotation.y = Math.PI * 0.5;
 windshield.rotation.z = 0.3;
 carGroup.add(windshield);
+carParts.push({ mesh: windshield, finalPos: new THREE.Vector3(0.72, 0.62, 0), finalOpacity: 0.3 });
 
 // ─ Headlights ─
 const lightGeo = new THREE.SphereGeometry(0.1, 8, 6);
-const lightMat = new THREE.MeshBasicMaterial({ color: 0xfff5cc, transparent: true, opacity: 0.9 });
-[-0.38, 0.38].forEach(z => {
+const lightMat = new THREE.MeshBasicMaterial({ color: 0xfff5cc, transparent: true, opacity: 0 });
+const headlights = [];
+const headlightLights = [];
+[-0.38, 0.38].forEach((z, i) => {
   const hl = new THREE.Mesh(lightGeo, lightMat);
-  hl.position.set(1.62, 0.05, z);
+  hl.position.set(Math.random()*20 - 10, -10, Math.random()*20 - 10); // Scattered
   carGroup.add(hl);
+  headlights.push(hl);
+  carParts.push({ mesh: hl, finalPos: new THREE.Vector3(1.62, 0.05, z), finalOpacity: 0.9 });
 
   // Point light from headlight
   const hLight = new THREE.PointLight(0xfff0aa, 0.8, 4);
-  hLight.position.set(1.62, 0.05, z);
+  hLight.position.copy(hl.position);
   carGroup.add(hLight);
+  headlightLights.push(hLight);
 });
 
 // ─ Ground grid ─
@@ -319,18 +367,58 @@ scene.add(particles);
 
 /* ── CAR PATH ── */
 const pathPoints = [
-  new THREE.Vector3(0, 0, 0),       // Start at center
-  new THREE.Vector3(1.5, -0.3, 0.5), // Curve right and down
-  new THREE.Vector3(0.5, -0.8, -0.3), // Curve left
-  new THREE.Vector3(-1, -1.2, 0.8),  // Curve left and down
-  new THREE.Vector3(0, -1.5, 0),     // Center down
-  new THREE.Vector3(0.8, -1.8, -0.5), // Continue down right
-  new THREE.Vector3(-0.5, -2.2, 0.3), // Curve left
-  new THREE.Vector3(0, -2.5, 0)       // End low
+  new THREE.Vector3(0, 0, 0),
+  new THREE.Vector3(0.3, -0.05, -1.2),
+  new THREE.Vector3(-0.4, -0.1, -2.4),
+  new THREE.Vector3(0.2, -0.15, -3.8),
+  new THREE.Vector3(0, -0.2, -5.2)
 ];
 
 const carPath = new THREE.CatmullRomCurve3(pathPoints);
 carPath.closed = false;
+const driveStart = 0.15; // Keep car assembled before driving
+const driveEnd = 1.0;
+// Mountains
+const mountainGeo = new THREE.ConeGeometry(3, 4, 6);
+const mountainMat = new THREE.MeshBasicMaterial({
+  color: 0x1a1a1a,
+  transparent: true,
+  opacity: 0.3
+});
+
+const mountains = [];
+for (let i = 0; i < 5; i++) {
+  const mountain = new THREE.Mesh(mountainGeo, mountainMat);
+  mountain.position.set(
+    (Math.random() - 0.5) * 20,
+    -2,
+    -8 + Math.random() * 4
+  );
+  mountain.scale.setScalar(0.5 + Math.random() * 0.5);
+  scene.add(mountain);
+  mountains.push(mountain);
+}
+
+// Hills
+const hillGeo = new THREE.SphereGeometry(2, 8, 6);
+const hillMat = new THREE.MeshBasicMaterial({
+  color: 0x0f0f0f,
+  transparent: true,
+  opacity: 0.2
+});
+
+const hills = [];
+for (let i = 0; i < 8; i++) {
+  const hill = new THREE.Mesh(hillGeo, hillMat);
+  hill.position.set(
+    (Math.random() - 0.5) * 25,
+    -3,
+    -6 + Math.random() * 6
+  );
+  hill.scale.set(1 + Math.random() * 0.5, 0.3 + Math.random() * 0.2, 1 + Math.random() * 0.5);
+  scene.add(hill);
+  hills.push(hill);
+}
 
 /* ══════════════════════════════════
    SCROLL-DRIVEN CAR ANIMATION
@@ -355,10 +443,10 @@ const trailGeo = new THREE.BufferGeometry();
 trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
 
 const trailMat = new THREE.PointsMaterial({
-  color: 0xffaa44,
-  size: 0.08,
+  color: 0xff8833,
+  size: 0.12,
   transparent: true,
-  opacity: 0.6,
+  opacity: 0.85,
   sizeAttenuation: true
 });
 
@@ -368,21 +456,26 @@ scene.add(trailParticles);
 let trailHistory = [];
 
 /* ── CAR GLOW EFFECT ── */
-const glowLight = new THREE.PointLight(0xffaa44, 2, 8);
+const glowLight = new THREE.PointLight(0xff9944, 4.5, 15);
 glowLight.position.set(0, 0, 0);
 scene.add(glowLight);
 
+// Additional glow light for more vibrancy
+const glowLight2 = new THREE.PointLight(0x4488ff, 3, 12);
+glowLight2.position.set(0, 0.5, 0);
+scene.add(glowLight2);
+
 /* ── SPARKLE PARTICLES ── */
-const sparkleCount = 100;
+const sparkleCount = 150;
 const sparklePositions = new Float32Array(sparkleCount * 3);
 const sparkleGeo = new THREE.BufferGeometry();
 sparkleGeo.setAttribute('position', new THREE.BufferAttribute(sparklePositions, 3));
 
 const sparkleMat = new THREE.PointsMaterial({
-  color: 0xffffff,
-  size: 0.02,
+  color: 0xffee99,
+  size: 0.05,
   transparent: true,
-  opacity: 0.8,
+  opacity: 0.95,
   sizeAttenuation: true
 });
 
@@ -446,16 +539,14 @@ function animate() {
   const s = scrollFrac;
 
   let pathProgress = 0;
-  let currentScale = 1;
+  let currentScale = 1; // Assembly already completed in intro
 
-  if (s < 0.25) {
-    // Assembly phase: car assembles at start position
-    pathProgress = 0; // Stay at start
-    currentScale = gsap.utils.mapRange(0, 0.25, 0, 1, s);
+  if (s <= driveStart) {
+    // Keep the car assembled and centered until user scrolls past the intro section
+    pathProgress = 0;
   } else {
-    // Movement phase: car moves down the path
-    pathProgress = gsap.utils.mapRange(0.25, 1, 0, 1, s);
-    currentScale = 1;
+    pathProgress = gsap.utils.mapRange(driveStart, driveEnd, 0, 1, s);
+    pathProgress = THREE.MathUtils.clamp(pathProgress, 0, 1);
   }
 
   // Get position from curved path
@@ -468,7 +559,6 @@ function animate() {
   const tangent = carPath.getTangentAt(pathProgress);
   targetRotY = Math.atan2(tangent.x, tangent.z);
 
-  // Scale based on phase
   carGroup.scale.setScalar(currentScale);
 
   // Smooth lerp for car
@@ -493,7 +583,16 @@ function animate() {
 
   // ── Glow light follows car ──
   glowLight.position.copy(carGroup.position);
-  glowLight.intensity = 1.5 + Math.sin(elapsed * 2) * 0.5;
+  glowLight.intensity = 3 + Math.sin(elapsed * 2) * 1.5;
+
+  glowLight2.position.copy(carGroup.position);
+  glowLight2.position.y += 0.5;
+  glowLight2.intensity = 2 + Math.cos(elapsed * 1.8) * 1;
+
+  // Update headlight lights positions
+  headlightLights.forEach((light, i) => {
+    light.position.copy(headlights[i].position);
+  });
 
   // ── Animate sparkles around car ──
   for (let i = 0; i < sparkleCount; i++) {
@@ -522,6 +621,16 @@ function animate() {
   // Drift particles slowly
   particles.rotation.y = elapsed * 0.015;
   particles.rotation.x = elapsed * 0.008;
+
+  // Animate background landscape
+  mountains.forEach((mountain, i) => {
+    mountain.position.z += Math.sin(elapsed * 0.2 + i) * 0.002;
+  });
+
+  hills.forEach((hill, i) => {
+    hill.position.z += Math.sin(elapsed * 0.15 + i) * 0.001;
+    hill.rotation.y += 0.001;
+  });
 
   // Grid scroll with car
   gridHelper.position.z = (elapsed * 0.3) % 0.6;
